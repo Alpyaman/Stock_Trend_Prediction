@@ -38,7 +38,7 @@ This project investigates stock trend prediction by:
 ---
 
 ## 📁 Repository Structure
-
+```
 📦Stock_Trend_Prediction
  ┣ 📂data/               # raw and cleaned datasets
  ┣ 📂notebooks/          # EDA & indicator analyses
@@ -48,7 +48,7 @@ This project investigates stock trend prediction by:
  ┣ 📜requirements.txt
  ┣ 📜README.md
  ┗ 📜app.py              # (Optional) live demo or streaming app
-
+```
 ---
 
 ## ⚙️ Installation

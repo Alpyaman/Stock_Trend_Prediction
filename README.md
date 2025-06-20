@@ -1,167 +1,149 @@
-# Stock Trend Prediction 📈
+# 📈 Stock Trend Prediction with Technical Indicators and ML
 
-A Python-based project that predicts stock trends using historical data and multiple technical indicators, leveraging statistical models, machine learning, and backtesting.
-
----
-
-## 📌 Overview
-
-This project investigates stock trend prediction by:
-
-1. Collecting and preprocessing historical stock data.
-2. Calculating common technical indicators.
-3. Training statistical and machine learning models.
-4. Backtesting strategies on historical records.
-5. Comparing indicators and models for trade decision accuracy.
+This project aims to predict **next-day stock movement (Up/Down)** for Apple Inc. (`AAPL`) using technical indicators and machine learning. It features a clean pipeline for data acquisition, feature engineering, classification modeling, and evaluation with visual buy/sell signals.
 
 ---
 
-## ⭐ Features
+## 🧠 Project Highlights
 
-- Clean, modularized preprocessing pipelines (e.g. MongoDB + Python).
-- Computation of SMA, EMA, MACD, RSI, Bollinger Bands, ROC, Williams %R.
-- Multiple models: statistical rules, ensemble ML, RNN/LSTM.
-- Backtesting framework with performance metrics and visualizations.
-- Risk analysis using daily returns and Monte Carlo simulations.
-
----
-
-## 🛠️ Technologies
-
-- **Language**: Python 3.8+  
-- **Libraries**: Pandas, NumPy, Scikit-learn, TensorFlow/Keras (optional), Matplotlib/Seaborn  
-- **Database**: MongoDB or equivalent  
-- **Visualization**: Matplotlib, Seaborn, Tableau (optional)  
-- **Jupyter Notebooks**: For exploratory data analysis  
-- **(Optional)** Streamlit app for live predictions
+- ✅ Binary classification: **Will the stock close higher tomorrow?**
+- 📊 Features: RSI, MACD, Bollinger Bands, EMA/SMA, and lag variables
+- 🤖 Models: Logistic Regression, Random Forest, XGBoost, and an Ensemble Voting Classifier
+- 🌀 Evaluation: Time Series Cross-Validation & Holdout Metrics
+- 🧪 Visual Results: Buy/Sell signals plotted on historical stock charts
 
 ---
 
-## 📁 Repository Structure
+## 📂 Project Structure
+
 ```
-📦Stock_Trend_Prediction
- ┣ 📂data/               # raw and cleaned datasets
- ┣ 📂notebooks/          # EDA & indicator analyses
- ┣ 📂models/             # trained models & checkpoints
- ┣ 📂backtest/           # backtesting scripts and metrics
- ┣ 📂utils/              # helper modules (data loaders, indicators)
- ┣ 📜requirements.txt
- ┣ 📜README.md
- ┗ 📜app.py              # (Optional) live demo or streaming app
+📁 Stock_Trend_Prediction/
+│
+├── fetch_data.py                    # Fetch and preprocess AAPL data
+├── model_training.py               # Train ensemble models on full dataset
+├── model_training_timeseries.py    # XGBoost with TimeSeriesSplit CV
+├── starter.ipynb                   # Notebook for EDA and experimentation
+├── requirements.txt                # Python dependencies
+│
+├── Ensemble_Model_Buy_Sell_Predictions_For_AAPL.png
+├── XGBoost_TimeSeriesCV_Buy_Sell_Predictions_For_AAPL.png
+├── rf_feature_importances.png
+├── Figure_2.png
+├── Target Class Distribution.png
+└── README.md
 ```
+
 ---
 
-## ⚙️ Installation
+## ⚙️ Setup & Installation
 
-1. **Clone the repo**
 ```bash
-   git clone https://github.com/Alpyaman/Stock_Trend_Prediction.git
-   cd Stock_Trend_Prediction
+# 1. Clone the repository
+git clone https://github.com/Alpyaman/Stock_Trend_Prediction.git
+cd Stock_Trend_Prediction
+
+# 2. Create virtual environment
+python -m venv venv
+venv\Scripts\activate  # On Windows
+
+# 3. Install dependencies
+pip install -r requirements.txt
 ```
-3. **Create a virtual environment**
-```bash
-   python3 -m venv venv
-   source venv/bin/activate  # Linux/macOS
-   venv\Scripts\activate      # Windows
-```
-5. **Install dependencies**
-```bash
-   pip install -r requirements.txt
-```
-7. **(Optional) Set up database**  
-   - If using MongoDB:
-   ```
-     mongod --dbpath /path/to/your/db
-   ```
----
-
-## 🚀 Usage
-
-- **Prepare your dataset** by placing CSV/JSON data in `data/`.
-- **Run preprocessing**:
-  `python utils/preprocess.py`
-- **Generate indicators**:
-  `python utils/indicators.py`
-- **Train models**:
-  `python backtest/train_model.py --ticker AAPL`
-- **Backtest strategies**:
-  `python backtest/run_backtest.py --model MACD --ticker MSFT`
-- **(Optional) Launch app**:
-  `streamlit run app.py`
 
 ---
 
-## 🧾 Data Sources
+## 🔁 Workflow
 
-Uses public data such as:
+### 1. Fetch & Engineer Data
+- Uses `yfinance` to collect 2 years of AAPL stock data.
+- Adds indicators:
+  - EMA, SMA
+  - RSI (14)
+  - MACD + Signal Line
+  - Bollinger Bands
+  - Lagged features and calendar features (`DayOfWeek`, `Month`)
 
-- IEX Cloud API (last 5 years)
-- Tiingo (end-of-day historical data)
-- Google Finance, Yahoo Finance, QuantQuote
-
-(Current datasets included in `data/`.)
-
----
-
-## 📊 Technical Indicators
-
-- **SMA / EMA**: Simple & exponential moving averages  
-- **MACD**: Trend reversal indicator  
-- **RSI**: Momentum-based buying/selling signals  
-- **Bollinger Bands**: Volatility envelopes  
-- **ROC**: Rate-of-change to assess trend strength  
-- **Williams %R**: Overbought/oversold signal  
+📄 Code: `fetch_data.py`
 
 ---
 
-## 🤖 Modeling & Backtesting
+### 2. Train & Evaluate Ensemble Models
 
-- **Rule-based strategies** on technical thresholds
-- **Machine Learning** using ML models (Random Forest, XGBoost)
-- **Deep Learning** with RNN/LSTM (optional)
-- **Backtesting evaluation**: accuracy, Sharpe ratio, drawdown, etc.
-- **Risk analysis**: Monte Carlo simulation, VaR estimates
+- Models used:
+  - Logistic Regression (with scaling)
+  - Random Forest Classifier
+  - XGBoost Classifier
+- Combined using **VotingClassifier (soft voting)**
+- Visualizes Buy (↑) / Sell (↓) predictions on close price
 
----
-
-## 📈 Results
-
-- Assessment of single vs. combined indicators (e.g. EMA+MACD)
-- Performance comparisons across models and tickers
-- Risk-return breakdown charts and summaries
+📄 Code: `model_training.py`  
+📈 Output:
+![Ensemble](Ensemble_Model_Buy_Sell_Predictions_For_AAPL.png)
 
 ---
 
-## ⚠️ Limitations & Future Work
+### 3. Time Series Cross-Validation with XGBoost
 
-- **Limited stock universe**: currently focuses on 4–8 tickers  
-- **Single-market bias**: primarily US stocks  
-- **Real-time deployment**: future work includes live feeds  
-- Plan to integrate advanced models e.g. attention-based DL
+- Uses `TimeSeriesSplit` for robust evaluation.
+- Performs `GridSearchCV` to optimize XGBoost hyperparameters.
+- Plots holdout predictions.
 
----
-
-## 🤝 Contributing
-
-Contributions welcome! To contribute:
-
-1. Create an issue or feature request  
-2. Fork the repo  
-3. Commit your changes with clear messages  
-4. Submit a pull request
-
-Please follow standard style guides and include doc updates.
+📄 Code: `model_training_timeseries.py`  
+📈 Output:
+![XGBoost](XGBoost_TimeSeriesCV_Buy_Sell_Predictions_For_AAPL.png)
 
 ---
 
-## 📄 License
+## 📊 Visual Outputs
 
-Distributed under the MIT License. See `LICENSE` for details.
+- Class distribution:
+  ![Distribution](Target%20Class%20Distribution.png)
+- XGBoost Feature Importance:
+  ![Feature Importance](rf_feature_importances.png)
+- Additional visuals in:
+  - `Figure_2.png`
+  - `starter.ipynb`
+
+---
+
+## 🔍 Dependencies
+
+Install via `requirements.txt`. Major libraries:
+
+- `yfinance`
+- `pandas`, `numpy`
+- `scikit-learn`
+- `xgboost`
+- `matplotlib`, `seaborn`
+
+---
+
+## 🧪 Evaluation Metrics
+
+Each model is evaluated using:
+
+- Confusion Matrix
+- Precision, Recall, F1-score
+- Visual Buy/Sell overlay on price history
+
+---
+
+## 📌 Future Enhancements
+
+- Extend to multiple tickers (MSFT, TSLA, etc.)
+- Add deep learning (LSTM)
+- Include portfolio-level backtesting
+- Streamlit dashboard for interactive predictions
 
 ---
 
 ## 📬 Contact
 
 - **Author**: Alpyaman  
-- **Email**: alpyaman3@gmail.com  
-- **GitHub**: https://github.com/Alpyaman
+- **GitHub**: [@Alpyaman](https://github.com/Alpyaman)
+
+---
+
+## 📝 License
+
+MIT License (see `LICENSE` file)

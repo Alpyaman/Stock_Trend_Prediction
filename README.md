@@ -4,20 +4,20 @@ A Python-based project that predicts stock trends using historical data and mult
 
 ## Table of Contents
 
-- [Overview](#overview)  
-- [Features](#features)  
-- [Technologies](#technologies)  
-- [Repository Structure](#repository-structure)  
-- [Installation](#installation)  
-- [Usage](#usage)  
-- [Data Sources](#data-sources)  
-- [Technical Indicators](#technical-indicators)  
-- [Modeling & Backtesting](#modeling--backtesting)  
-- [Results](#results)  
-- [Limitations & Future Work](#limitations--future-work)  
-- [Contributing](#contributing)  
-- [License](#license)  
-- [Contact](#contact)
+- [Overview](#Overview)  
+- [Features](#Features)  
+- [Technologies](#Technologies)  
+- [Repository Structure](#Repository-Structure)  
+- [Installation](#Installation)  
+- [Usage](#Usage)  
+- [Data Sources](#Data-Sources)  
+- [Technical Indicators](#Technical-Indicators)  
+- [Modeling & Backtesting](#Modeling--Backtesting)  
+- [Results](#Results)  
+- [Limitations & Future Work](#Limitations--Future-Work)  
+- [Contributing](#Contributing)  
+- [License](#License)  
+- [Contact](#Contact)
 
 ---
 
@@ -70,37 +70,41 @@ This project investigates stock trend prediction by:
 
 ## ⚙️ Installation
 
-1. **Clone the repo**  
+1. **Clone the repo**
+```bash
    git clone https://github.com/Alpyaman/Stock_Trend_Prediction.git
    cd Stock_Trend_Prediction
-
-2. **Create a virtual environment**  
+```
+3. **Create a virtual environment**
+```bash
    python3 -m venv venv
    source venv/bin/activate  # Linux/macOS
    venv\Scripts\activate      # Windows
-
-3. **Install dependencies**  
+```
+5. **Install dependencies**
+```bash
    pip install -r requirements.txt
-
-4. **(Optional) Set up database**  
+```
+7. **(Optional) Set up database**  
    - If using MongoDB:
+   ```
      mongod --dbpath /path/to/your/db
-
+   ```
 ---
 
 ## 🚀 Usage
 
 - **Prepare your dataset** by placing CSV/JSON data in `data/`.
 - **Run preprocessing**:
-  python utils/preprocess.py
+  `python utils/preprocess.py`
 - **Generate indicators**:
-  python utils/indicators.py
+  `python utils/indicators.py`
 - **Train models**:
-  python backtest/train_model.py --ticker AAPL
+  `python backtest/train_model.py --ticker AAPL`
 - **Backtest strategies**:
-  python backtest/run_backtest.py --model MACD --ticker MSFT
+  `python backtest/run_backtest.py --model MACD --ticker MSFT`
 - **(Optional) Launch app**:
-  streamlit run app.py
+  `streamlit run app.py`
 
 ---
 
@@ -176,5 +180,5 @@ Distributed under the MIT License. See `LICENSE` for details.
 ## 📬 Contact
 
 - **Author**: Alpyaman  
-- **Email**: your.email@example.com  
+- **Email**: alpyaman3@gmail.com  
 - **GitHub**: https://github.com/Alpyaman

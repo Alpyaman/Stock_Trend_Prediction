@@ -4,20 +4,20 @@ A Python-based project that predicts stock trends using historical data and mult
 
 ## Table of Contents
 
-- [Overview](#Overview)  
-- [Features](#Features)  
-- [Technologies](#Technologies)  
-- [Repository Structure](#Repository-Structure)  
-- [Installation](#Installation)  
-- [Usage](#Usage)  
-- [Data Sources](#Data-Sources)  
-- [Technical Indicators](#Technical-Indicators)  
-- [Modeling & Backtesting](#Modeling--Backtesting)  
-- [Results](#Results)  
-- [Limitations & Future Work](#Limitations--Future-Work)  
-- [Contributing](#Contributing)  
-- [License](#License)  
-- [Contact](#Contact)
+- [Overview](##Overview)  
+- [Features](##Features)  
+- [Technologies](##Technologies)  
+- [Repository Structure](##Repository-Structure)  
+- [Installation](##Installation)  
+- [Usage](##Usage)  
+- [Data Sources](##Data-Sources)  
+- [Technical Indicators](##Technical-Indicators)  
+- [Modeling & Backtesting](##Modeling--Backtesting)  
+- [Results](##Results)  
+- [Limitations & Future Work](##Limitations--Future-Work)  
+- [Contributing](##Contributing)  
+- [License](##License)  
+- [Contact](##Contact)
 
 ---
 

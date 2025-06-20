@@ -1,6 +1,6 @@
 # 📈 Stock Trend Prediction with Technical Indicators and ML
 
-([XGBoost_TimeSeriesCV_Buy_Sell_Predictions_For_AAPL.png])
+(XGBoost_TimeSeriesCV_Buy_Sell_Predictions_For_AAPL.png)
 
 This project aims to predict **next-day stock movement (Up/Down)** for Apple Inc. (`AAPL`) using technical indicators and machine learning. It features a clean pipeline for data acquisition, feature engineering, classification modeling, and evaluation with visual buy/sell signals.
 

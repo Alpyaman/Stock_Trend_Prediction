@@ -3,14 +3,17 @@ Model training and evaluation utilities.
 """
  
 import logging
-from typing import Tuple, Optional, Dict, Any
+from typing import Tuple, Optional, Dict, Any, List
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, TimeSeriesSplit, GridSearchCV
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier, StackingClassifier
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, f1_score, accuracy_score
+from sklearn.feature_selection import mutual_info_classif, SelectKBest
+from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import Pipeline as ImbPipeline
 from xgboost import XGBClassifier
 import matplotlib.pyplot as plt
  
@@ -363,3 +366,207 @@ class ModelTrainer:
             logger.info(f"Saved feature importance plot to {save_path}")
         else:
             plt.show()
+ 
+    def select_features_mutual_info(
+        self,
+        X: pd.DataFrame,
+        y: pd.Series,
+        k: int = 30    
+        ) -> Tuple[pd.DataFrame, List[str]]:
+        """
+        Select top k features based on mutual information.
+ 
+        Args:
+            X: Feature matrix
+            y: Target vector
+            k: Number of top features to select
+ 
+        Returns:
+            Tuple of (selected features DataFrame, list of selected feature names)
+        """
+        logger.info(f"Selecting top {k} features using mutual information")
+ 
+        # Calculate mutual information scores
+        mi_scores = mutual_info_classif(X, y, random_state=self.config.random_state)
+ 
+        # Create DataFrame with feature names and scores
+        mi_df = pd.DataFrame({
+            'feature': X.columns,
+            'mi_score': mi_scores
+        }).sort_values('mi_score', ascending=False)
+ 
+        # Select top k features
+        top_features = mi_df.head(k)['feature'].tolist()
+ 
+        logger.info(f"Selected features: {top_features}")
+        logger.info(f"Top 5 MI scores: {mi_df.head()['mi_score'].tolist()}")
+ 
+        return X[top_features], top_features
+ 
+    def remove_correlated_features(
+        self,
+        X: pd.DataFrame,
+        threshold: float = 0.95
+    ) -> Tuple[pd.DataFrame, List[str]]:
+        """Remove highly correlated features.
+ 
+        Args:
+            X: Feature matrix
+            threshold: Correlation threshold above which features are removed
+ 
+        Returns:
+            Tuple of (DataFrame with reduced features, list of remaining feature names)
+        """
+        logger.info(f"Removing features with correlation > {threshold}")
+ 
+        # Calculate correlation matrix
+        corr_matrix = X.corr().abs()
+ 
+        # Select upper triangle of correlation matrix
+        upper_tri = corr_matrix.where(
+            np.triu(np.ones(corr_matrix.shape), k=1).astype(bool)
+        )
+ 
+        # Find features with correlation greater than threshold
+        to_drop = [column for column in upper_tri.columns if any(upper_tri[column] > threshold)]
+ 
+        logger.info(f"Dropping {len(to_drop)} highly correlated features: {to_drop}")
+ 
+        # Drop features
+        X_reduced = X.drop(columns=to_drop)
+        remaining_features = X_reduced.columns.tolist()
+ 
+        return X_reduced, remaining_features
+ 
+    def apply_smote(
+        self,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
+        sampling_strategy: str = 'auto'
+    ) -> Tuple[pd.DataFrame, pd.Series]:
+        """Apply SMOTE to balance classes.
+ 
+        Args:
+            X_train: Training features
+            y_train: Training labels
+            sampling_strategy: SMOTE sampling strategy
+ 
+        Returns:
+            Tuple of (resampled X_train, resampled y_train)
+        """
+        logger.info("Applying SMOTE for class imbalance handling")
+ 
+        # Count before
+        class_counts_before = y_train.value_counts()
+        logger.info(f"Class distribution before SMOTE: {class_counts_before.to_dict()}")
+ 
+        # Apply SMOTE
+        smote = SMOTE(sampling_strategy=sampling_strategy, random_state=self.config.random_state)
+        X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
+ 
+        # Count after
+        class_counts_after = pd.Series(y_resampled).value_counts()
+        logger.info(f"Class distribution after SMOTE: {class_counts_after.to_dict()}")
+ 
+        return pd.DataFrame(X_resampled, columns=X_train.columns), pd.Series(y_resampled)
+ 
+    def create_stacking_classifier(
+        self,
+        base_estimators: Optional[List] = None,
+        final_estimator: Optional[Any] = None
+    ) -> StackingClassifier:
+        """Create stacking classifier with meta-learner.
+ 
+        Args:
+            base_estimators: List of (name, estimator) tuples for base models
+            final_estimator: Meta-learner model (if None, uses LogisticRegression)
+ 
+        Returns:
+            StackingClassifier model
+        """
+        if base_estimators is None:
+            # Create default base estimators
+            base_estimators = [
+                ('rf', self.create_random_forest()),
+                ('xgb', self.create_xgboost()),
+            ]
+ 
+        if final_estimator is None:
+            # Use LogisticRegression as meta-learner
+            final_estimator = LogisticRegression(
+                max_iter=1000,
+                random_state=self.config.random_state
+            )
+ 
+        stacking_clf = StackingClassifier(
+            estimators=base_estimators,
+            final_estimator=final_estimator,
+            cv=5
+        )
+ 
+        logger.info(f"Created stacking classifier with {len(base_estimators)} base estimators")
+        return stacking_clf
+ 
+    def walk_forward_validation(
+        self,
+        X: pd.DataFrame,
+        y: pd.Series,
+        model: Any,
+        n_splits: int = 5,
+        train_size: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """Perform walk-forward validation for time series.
+ 
+        Args:
+            X: Feature matrix
+            y: Target vector
+            model: Model to evaluate
+            n_splits: Number of splits for time series cross-validation
+            train_size: Minimum training set size
+ 
+        Returns:
+            Dictionary with validation results
+        """
+        logger.info(f"Performing walk-forward validation with {n_splits} splits")
+ 
+        tscv = TimeSeriesSplit(n_splits=n_splits)
+        scores = []
+        predictions_list = []
+        actuals_list = []
+ 
+        for fold, (train_idx, test_idx) in enumerate(tscv.split(X), 1):
+            logger.info(f"Processing fold {fold}/{n_splits}")
+ 
+            X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+            y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+ 
+            # Train model
+            model.fit(X_train, y_train)
+ 
+            # Predict
+            y_pred = model.predict(X_test)
+ 
+            # Calculate score
+            f1 = f1_score(y_test, y_pred)
+            acc = accuracy_score(y_test, y_pred)
+ 
+            scores.append({'fold': fold, 'f1_score': f1, 'accuracy': acc})
+            predictions_list.extend(y_pred)
+            actuals_list.extend(y_test)
+ 
+            logger.info(f"Fold {fold} - F1: {f1:.4f}, Accuracy: {acc:.4f}")
+ 
+        # Calculate average metrics
+        avg_f1 = np.mean([s['f1_score'] for s in scores])
+        avg_acc = np.mean([s['accuracy'] for s in scores])
+ 
+        logger.info(f"Average F1 Score: {avg_f1:.4f}")
+        logger.info(f"Average Accuracy: {avg_acc:.4f}")
+ 
+        return {
+            'fold_scores': scores,
+            'avg_f1_score': avg_f1,
+            'avg_accuracy': avg_acc,
+            'predictions': predictions_list,
+            'actuals': actuals_list
+        }

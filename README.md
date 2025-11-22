@@ -149,9 +149,9 @@ python scripts/train_xgboost_timeseries.py
 - Class distribution:
   ![Distribution](Target%20Class%20Distribution.png)
 - XGBoost Feature Importance:
-  ![Feature Importance](rf_feature_importances.png)
+  ![Feature Importance](Improved_RF_Feature_Importances.png)
 - Additional visuals in:
-  - ![XGBoost Feature Importance](XGBoost_Feature_Importance.png)
+  - ![XGBoost Feature Importance](Improved_XGBoost_Feature_Importance.png)
   - `starter.ipynb`
 
 ---

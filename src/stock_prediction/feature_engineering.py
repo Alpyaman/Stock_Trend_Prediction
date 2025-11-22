@@ -237,6 +237,181 @@ class FeatureEngineer:
         logger.debug("Added statistical features")
         return df
 
+    def add_stochastic_oscillator(self, df: pd.DataFrame, window: int = 14) -> pd.DataFrame:
+        """Add Stochastic Oscillator (%K and %D).
+
+        Args:
+            df: DataFrame with High, Low, and Close columns
+            window: Lookback window for stochastic calculation
+
+        Returns:
+            DataFrame with added Stochastic columns
+        """
+        df = df.copy()
+
+        # Calculate %K
+        low_min = df['Low'].rolling(window=window).min()
+        high_max = df['High'].rolling(window=window).max()
+        df['Stochastic_K'] = 100 * (df['Close'] - low_min) / (high_max - low_min)
+
+        # Calculate %D (3-period SMA of %K)
+        df['Stochastic_D'] = df['Stochastic_K'].rolling(window=3).mean()
+
+        logger.debug(f"Added Stochastic Oscillator (window={window})")
+        return df
+
+    def add_williams_r(self, df: pd.DataFrame, window: int = 14) -> pd.DataFrame:
+        """Add Williams %R indicator.
+
+        Args:
+            df: DataFrame with High, Low, and Close columns
+            window: Lookback window
+
+        Returns:
+            DataFrame with added Williams %R column
+        """
+        df = df.copy()
+
+        high_max = df['High'].rolling(window=window).max()
+        low_min = df['Low'].rolling(window=window).min()
+        df['Williams_R'] = -100 * (high_max - df['Close']) / (high_max - low_min)
+
+        logger.debug(f"Added Williams %R (window={window})")
+        return df
+
+    def add_cci(self, df: pd.DataFrame, window: int = 20) -> pd.DataFrame:
+        """Add Commodity Channel Index (CCI).
+
+        Args:
+            df: DataFrame with High, Low, and Close columns
+            window: Lookback window
+
+        Returns:
+            DataFrame with added CCI column
+        """
+        df = df.copy()
+
+        # Typical Price
+        tp = (df['High'] + df['Low'] + df['Close']) / 3
+
+        # Simple Moving Average of TP
+        sma_tp = tp.rolling(window=window).mean()
+
+        # Mean Absolute Deviation
+        mad = tp.rolling(window=window).apply(lambda x: np.abs(x - x.mean()).mean())
+
+        # CCI calculation
+        df['CCI'] = (tp - sma_tp) / (0.015 * mad)
+
+        logger.debug(f"Added CCI (window={window})")
+        return df
+
+    def add_adx(self, df: pd.DataFrame, window: int = 14) -> pd.DataFrame:
+        """Add Average Directional Index (ADX) and directional indicators.
+
+        Args:
+            df: DataFrame with High, Low, and Close columns
+            window: Lookback window
+
+        Returns:
+            DataFrame with added ADX, +DI, and -DI columns
+        """
+        df = df.copy()
+
+        # Calculate True Range
+        high_low = df['High'] - df['Low']
+        high_close = np.abs(df['High'] - df['Close'].shift())
+        low_close = np.abs(df['Low'] - df['Close'].shift())
+        tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
+
+        # Calculate directional movement
+        high_diff = df['High'].diff()
+        low_diff = -df['Low'].diff()
+
+        plus_dm = high_diff.where((high_diff > low_diff) & (high_diff > 0), 0)
+        minus_dm = low_diff.where((low_diff > high_diff) & (low_diff > 0), 0)
+
+        # Smooth the values
+        atr = tr.rolling(window=window).mean()
+        plus_di = 100 * (plus_dm.rolling(window=window).mean() / atr)
+        minus_di = 100 * (minus_dm.rolling(window=window).mean() / atr)
+
+        # Calculate DX and ADX
+        dx = 100 * np.abs(plus_di - minus_di) / (plus_di + minus_di)
+        df['ADX'] = dx.rolling(window=window).mean()
+        df['Plus_DI'] = plus_di
+        df['Minus_DI'] = minus_di
+
+        logger.debug(f"Added ADX (window={window})")
+        return df
+
+    def add_ichimoku_cloud(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add Ichimoku Cloud indicators.
+
+        Args:
+            df: DataFrame with High, Low, and Close columns
+
+        Returns:
+            DataFrame with added Ichimoku indicators
+        """
+        df = df.copy()
+
+        # Tenkan-sen (Conversion Line): (9-period high + 9-period low)/2
+        period9_high = df['High'].rolling(window=9).max()
+        period9_low = df['Low'].rolling(window=9).min()
+        df['Tenkan_sen'] = (period9_high + period9_low) / 2
+
+        # Kijun-sen (Base Line): (26-period high + 26-period low)/2
+        period26_high = df['High'].rolling(window=26).max()
+        period26_low = df['Low'].rolling(window=26).min()
+        df['Kijun_sen'] = (period26_high + period26_low) / 2
+
+        # Senkou Span A (Leading Span A): (Conversion Line + Base Line)/2
+        df['Senkou_Span_A'] = ((df['Tenkan_sen'] + df['Kijun_sen']) / 2).shift(26)
+
+        # Senkou Span B (Leading Span B): (52-period high + 52-period low)/2
+        period52_high = df['High'].rolling(window=52).max()
+        period52_low = df['Low'].rolling(window=52).min()
+        df['Senkou_Span_B'] = ((period52_high + period52_low) / 2).shift(26)
+
+        # Chikou Span (Lagging Span): Close shifted back 26 periods
+        df['Chikou_Span'] = df['Close'].shift(-26)
+
+        logger.debug("Added Ichimoku Cloud indicators")
+        return df
+
+    def add_money_flow_index(self, df: pd.DataFrame, window: int = 14) -> pd.DataFrame:
+        """Add Money Flow Index (MFI).
+
+        Args:
+            df: DataFrame with High, Low, Close, and Volume columns
+            window: Lookback window
+
+        Returns:
+            DataFrame with added MFI column
+        """
+        df = df.copy()
+
+        # Typical Price
+        tp = (df['High'] + df['Low'] + df['Close']) / 3
+
+        # Money Flow
+        mf = tp * df['Volume']
+
+        # Positive and Negative Money Flow
+        mf_pos = mf.where(tp > tp.shift(1), 0)
+        mf_neg = mf.where(tp < tp.shift(1), 0)
+
+        # Money Flow Ratio
+        mf_pos_sum = mf_pos.rolling(window=window).sum()
+        mf_neg_sum = mf_neg.rolling(window=window).sum()
+        mf_ratio = mf_pos_sum / mf_neg_sum
+
+        # Money Flow Index
+        df['MFI'] = 100 - (100 / (1 + mf_ratio))
+
+        logger.debug(f"Added MFI (window={window})")
+        return df
 
     def add_calendar_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Add calendar-based features.
@@ -273,11 +448,21 @@ class FeatureEngineer:
         """
         logger.info("Adding all technical indicators")
  
-        # Apply indicators in order
+        # Apply basic indicators first
         df = self.add_moving_averages(df)
         df = self.add_rsi(df)
         df = self.add_macd(df)
         df = self.add_bollinger_bands(df)
+
+        # Add advanced indicators
+        df = self.add_stochastic_oscillator(df)
+        df = self.add_williams_r(df)
+        df = self.add_cci(df)
+        df = self.add_adx(df)
+        df = self.add_ichimoku_cloud(df)
+        df = self.add_money_flow_index(df)
+
+        # Add derived features
         df = self.add_lag_features(df)
         df = self.add_calendar_features(df)
         df = self.add_momentum_features(df)

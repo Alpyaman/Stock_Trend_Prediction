@@ -1,7 +1,9 @@
 # 📈 Stock Trend Prediction with Technical Indicators and ML
 
 This project predicts **next-day stock movement (Up/Down)** for Apple Inc. (`AAPL`) using technical indicators and machine learning. It features a **refactored, production-ready** codebase with proper module structure, type hints, error handling, and comprehensive logging.
- 
+
+![Thumbnail](Technical_Indicators_Overview.png)
+
 ---
  
 ## 🧠 Project Highlights
